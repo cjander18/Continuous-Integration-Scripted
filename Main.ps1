@@ -39,7 +39,7 @@ param(
     
     {
 
-        Write-Host "A directory string, or array of strings must be specified"
+        Write-Verbose "A directory string, or array of strings must be specified"
         return
 
     }
@@ -55,27 +55,25 @@ param(
 
 
 
-    $DirectoryList | % {
+    $DirectoryList | ForEach-Object {
 
     }
 
-
-
     # Get the current directory location of the executing script
-    $CurrentLocation = Split-Path -Parent  $MyInvocation.MyCommand.Path
+    $CurrentLocation = $PSScriptRoot
 
     # Load the configuration data
     . $CurrentLocation\Config\Config.ps1
 
     # Get all items in the target folder and its subfolders that are not a folder (Container), if error just carry on
-    $Targets = gci $TargetDirectory -Recurse `
+    $Targets = Get-ChildItem $TargetDirectory -Recurse `
         -Force `
         -ErrorAction "Continue" `
         -Filter $Filter |
-        Where { ! $_.PSIsContainer }
+        Where-Object { ! $_.PSIsContainer }
 
     # For each file found
-    $Targets | %  {
+    $Targets | ForEach-Object  {
 
         # Get its full file path
         $TargetFile = $_.FullName
@@ -93,17 +91,17 @@ param(
             Write-Output "Deploying $TargetFile"
 
             # Deploy the file to the database
-            $Output = $DbObj.RunFile([string]$TargetFile)
-           # $Output = Invoke-SqlCmd -InputFile $TargetFile `
-           #        -ServerInstance $ServerName `
-           #        -Database $DatabaseName `
-           #        -Username $SQLUser `
-           #        -Password $SQLPassword `
-           #        -EncryptConnection `
-           #        -OutputSqlErrors $True `
-           #        -Verbose #| Out-File "C:\log.log" -Append
+            $DbObj.RunFile([string]$TargetFile)
+            #Invoke-SqlCmd -InputFile $TargetFile `
+            #       -ServerInstance $ServerName `
+            #       -Database $DatabaseName `
+            #       -Username $SQLUser `
+            #       -Password $SQLPassword `
+            #       -EncryptConnection `
+            #       -OutputSqlErrors $True `
+            #       -Verbose #| Out-File "C:\log.log" -Append
                 
-            #Write-Output $Output
+            Write-Output $Output
         }
 
     }
